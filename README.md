@@ -1,116 +1,87 @@
-# Stock Helper
+# 중소형주 뉴스 기반 투자 분석 시스템
 
-주식 관련 도구를 제공하는 파이썬 프로젝트입니다.
+이 프로젝트는 네이버 금융 뉴스를 스크래핑하여 대형주를 제외한 중소형주 관련 뉴스를 분석하고, 투자 의사결정에 도움을 주는 시스템입니다.
 
 ## 주요 기능
 
-- **오늘의 주식 정보 요약**: Perplexity LLM API를 사용하여 주요 주식들의 정보를 분석하고 요약
-- **주식 종목 추천**: AI가 시장 상황을 분석하여 맞춤형 주식 종목을 추천
-  - 일반 추천 (시장 상황 기반)
-  - 안정적인 배당주 추천
-  - 고성장주 추천
-  - 테크주 추천
-- 실시간 주식 데이터 수집 (yfinance 사용)
-- 한국어로 된 이해하기 쉬운 분석 및 추천 제공
+1. 중소형주 관련 뉴스 스크래핑
+   - 네이버 금융 뉴스에서 대형주 관련 뉴스를 제외하고 수집
+   - 설정 가능한 기간 동안의 뉴스 수집
+
+2. 뉴스 분석
+   - 감성 분석 (긍정/부정)
+   - Perplexity API를 활용한 AI 기반 뉴스 분석
+   - 유사 뉴스 검색
+
+3. 투자 분석
+   - 뉴스 기반 투자 시사점 도출
+   - 종합 투자 분석 리포트 생성
+   - 분석 결과 CSV 파일 저장
 
 ## 설치 방법
 
-1. 저장소를 클론합니다:
+1. 저장소 클론
 ```bash
-git clone <repository-url>
+git clone https://github.com/yourusername/stock_helper.git
 cd stock_helper
 ```
 
-2. 가상환경을 생성하고 활성화합니다:
+2. 가상환경 생성 및 활성화
 ```bash
 python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
 ```
 
-3. 의존성을 설치합니다:
+3. 필요한 패키지 설치
 ```bash
 pip install -r requirements.txt
 ```
 
-4. 환경 변수를 설정합니다:
-```bash
-# .env 파일을 생성하고 편집
-copy env_example.txt .env
-# 또는
-cp env_example.txt .env
+4. 환경 변수 설정
+- `.env` 파일을 생성하고 다음 내용을 추가:
 ```
-
-5. `.env` 파일을 편집하여 Perplexity API 키를 설정합니다:
+PERPLEXITY_API_KEY=your_api_key_here
 ```
-PERPLEXITY_API_KEY=your_actual_api_key_here
-```
-
-## Perplexity API 키 발급
-
-1. [Perplexity AI](https://www.perplexity.ai/)에 가입
-2. API 키 발급 페이지에서 새 키 생성
-3. `.env` 파일에 API 키 설정
 
 ## 사용 방법
 
-### 대화형 모드
+1. 프로그램 실행
 ```bash
 python main.py
 ```
 
-### 직접 모듈 사용
+2. 메뉴 선택
+- 1: 최신 뉴스 수집 및 분석
+- 2: 특정 기간 뉴스 분석
+- 3: 종료
 
-#### 주식 정보 요약
-```python
-from src.stock_summarizer import StockSummarizer
+3. 분석 결과
+- 분석이 완료되면 투자 분석 요약이 표시됩니다.
+- 결과를 CSV 파일로 저장할 수 있습니다.
 
-summarizer = StockSummarizer()
-summary = summarizer.get_daily_stock_summary()
-print(summary)
-```
+## 주의사항
 
-#### 주식 종목 추천
-```python
-from src.stock_recommender import StockRecommender
+1. API 키
+- Perplexity API 키가 필요합니다.
+- API 키는 절대로 공개 저장소에 커밋하지 마세요.
 
-recommender = StockRecommender()
+2. 뉴스 스크래핑
+- 네이버 금융의 robots.txt를 준수합니다.
+- 과도한 요청을 피하기 위해 적절한 간격을 두고 스크래핑합니다.
 
-# 일반 추천
-recommendation = recommender.get_stock_recommendations()
-print(recommendation)
+3. 투자 주의
+- 이 시스템의 분석 결과는 참고용입니다.
+- 실제 투자는 충분한 검토와 판단 후에 진행하세요.
 
-# 배당주 추천
-recommendation = recommender.get_stock_recommendations(
-    "안정적인 배당주를 중심으로 추천해주세요."
-)
-print(recommendation)
-```
+## 기여 방법
 
-## 추천 시스템 특징
-
-### 분석 데이터
-- **시장 지수**: S&P 500, Dow Jones, NASDAQ, VIX
-- **섹터 성과**: 기술, 금융, 에너지, 헬스케어 등 10개 섹터
-- **실시간 데이터**: yfinance를 통한 최신 시장 정보
-
-### 추천 유형
-1. **일반 추천**: 현재 시장 상황을 종합적으로 분석하여 추천
-2. **배당주 추천**: 안정적인 배당 수익률을 제공하는 기업들
-3. **성장주 추천**: 고성장 기업들을 중심으로 한 추천
-4. **테크주 추천**: AI, 반도체, 소프트웨어 등 기술 관련 기업들
-
-## 설정
-
-### 기본 주식 심볼 변경
-`.env` 파일에서 `DEFAULT_STOCK_SYMBOLS`를 수정하여 분석할 주식들을 변경할 수 있습니다:
-
-```
-DEFAULT_STOCK_SYMBOLS=AAPL,MSFT,GOOGL,TSLA,AMZN,NVDA,META
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## 라이선스
 
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 
+이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 [LICENSE](LICENSE) 파일을 참조하세요. 

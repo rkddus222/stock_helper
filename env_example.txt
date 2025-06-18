@@ -1,9 +1,0 @@
-# 환경 변수 설정 예시
-# 이 파일을 .env로 복사하고 실제 값으로 수정하세요
-
-# Perplexity API 설정
-# https://www.perplexity.ai/ 에서 API 키를 발급받으세요
-PERPLEXITY_API_KEY=your_perplexity_api_key_here
-
-# 기본 주식 심볼 설정 (쉼표로 구분)
-DEFAULT_STOCK_SYMBOLS=AAPL,MSFT,GOOGL,TSLA,AMZN,NVDA,META,BRK-B,JPM,V 

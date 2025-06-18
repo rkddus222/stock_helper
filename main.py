@@ -1,145 +1,121 @@
 #!/usr/bin/env python3
 """
-Stock Helper - 주식 관련 도구
+주식 도우미 메인 애플리케이션
 
-이 모듈은 주식 관련 기능을 제공하는 메인 애플리케이션입니다.
+네이버 금융 뉴스를 스크래핑하고 분석하여 투자 의사결정을 돕습니다.
 """
 
+import os
 import sys
-import logging
-from typing import Optional
-from src.stock_summarizer import StockSummarizer
-from src.stock_recommender import StockRecommender
+import time
+from datetime import datetime
+from dotenv import load_dotenv
+import pandas as pd
 
-# 로깅 설정
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# src 폴더를 Python 경로에 추가
+sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
+from scrapers.naver_scraper import scrape_naver_finance_news_titles
+from news_based_analyzer import NewsBasedAnalyzer
 
-def get_stock_summary(symbols: Optional[list] = None) -> str:
-    """
-    주식 정보 요약을 가져오는 함수
+def main():
+    """메인 애플리케이션"""
+    # 환경 변수 로드
+    load_dotenv()
     
-    Args:
-        symbols: 분석할 주식 심볼 리스트
-        
-    Returns:
-        요약 텍스트
-    """
-    try:
-        summarizer = StockSummarizer()
-        summary = summarizer.get_daily_stock_summary(symbols)
-        return summary
-    except Exception as e:
-        logger.error(f"주식 요약 생성 중 오류: {e}")
-        return f"주식 정보 요약을 가져오는 중 오류가 발생했습니다: {e}"
-
-
-def get_stock_recommendations(preference_type: str = "1") -> str:
-    """
-    주식 종목 추천을 가져오는 함수
+    # API 키 확인
+    if not os.getenv('PERPLEXITY_API_KEY'):
+        print("Error: PERPLEXITY_API_KEY가 설정되지 않았습니다.")
+        print("1. .env 파일을 생성하세요.")
+        print("2. PERPLEXITY_API_KEY=your_api_key를 추가하세요.")
+        return
     
-    Args:
-        preference_type: 선호사항 유형 ("1": 일반, "2": 배당주, "3": 성장주, "4": 테크주)
-        
-    Returns:
-        추천 텍스트
-    """
-    try:
-        recommender = StockRecommender()
-        
-        preferences = {
-            "1": None,
-            "2": "안정적인 배당주를 중심으로 추천해주세요. 배당 수익률이 높고 안정적인 기업들을 선호합니다.",
-            "3": "고성장 기업들을 중심으로 추천해주세요. 매출과 이익이 빠르게 성장하는 기업들을 선호합니다.",
-            "4": "기술주를 중심으로 추천해주세요. AI, 반도체, 소프트웨어 등 기술 관련 기업들을 선호합니다."
-        }
-        
-        user_preference = preferences.get(preference_type)
-        recommendation = recommender.get_stock_recommendations(user_preference)
-        return recommendation
-        
-    except Exception as e:
-        logger.error(f"주식 추천 생성 중 오류: {e}")
-        return f"주식 종목 추천을 가져오는 중 오류가 발생했습니다: {e}"
-
-
-def show_recommendation_menu() -> str:
-    """
-    추천 메뉴를 표시하고 사용자 선택을 받는 함수
+    print("=== 네이버 금융 뉴스 기반 투자 분석 시스템 ===")
     
-    Returns:
-        선택된 추천 유형
-    """
-    print("\n=== 추천 유형 선택 ===")
-    print("1. 일반 추천 (시장 상황 기반)")
-    print("2. 안정적인 배당주 추천")
-    print("3. 고성장주 추천")
-    print("4. 테크주 추천")
-    print("5. 돌아가기")
+    # 분석기 초기화
+    analyzer = NewsBasedAnalyzer()
     
     while True:
-        choice = input("\n원하는 추천 유형을 선택하세요 (1-5): ").strip()
-        if choice in ["1", "2", "3", "4", "5"]:
-            return choice
-        else:
-            print("잘못된 선택입니다. 1-5 중에서 선택하세요.")
-
-
-def main() -> None:
-    """
-    메인 함수 - 애플리케이션의 진입점
-    """
-    logger.info("Stock Helper 애플리케이션이 시작되었습니다.")
-    
-    try:
-        print("=== Stock Helper ===")
-        print("1. 오늘의 주식 정보 요약")
-        print("2. 주식 종목 추천")
+        print("\n1. 오늘의 뉴스 수집 및 분석")
+        print("2. 특정 페이지 수만큼 뉴스 분석")
         print("3. 종료")
         
-        while True:
-            choice = input("\n원하는 기능을 선택하세요 (1-3): ").strip()
+        choice = input("\n선택하세요 (1-3): ")
+        
+        if choice == '1':
+            print("\n오늘의 뉴스를 수집하고 분석합니다...")
             
-            if choice == "1":
-                print("\n주식 정보 요약을 생성 중입니다...")
-                summary = get_stock_summary()
-                print("\n" + "="*50)
-                print("오늘의 주식 정보 요약")
-                print("="*50)
-                print(summary)
-                print("="*50)
-                
-            elif choice == "2":
-                recommendation_type = show_recommendation_menu()
-                
-                if recommendation_type == "5":
+            # 네이버 뉴스 스크래핑 (기본 5페이지)
+            news_articles = scrape_naver_finance_news_titles(max_pages=5)
+            
+            if not news_articles:
+                print("수집된 뉴스가 없습니다.")
+                continue
+            
+            print(f"\n총 {len(news_articles)}개의 뉴스를 수집했습니다.")
+            
+            # DataFrame으로 변환
+            news_df = pd.DataFrame(news_articles)
+            news_df['date'] = datetime.now()  # 현재 시간 추가
+            
+            # 뉴스 분석
+            print("\n뉴스를 분석하고 있습니다...")
+            analyzed_df = analyzer.analyze_news_data(news_df)
+            
+            # 투자 요약 생성
+            summary = analyzer.generate_investment_summary(analyzed_df)
+            print("\n=== 투자 분석 요약 ===")
+            print(summary)
+            
+            # 결과 저장
+            save = input("\n분석 결과를 저장하시겠습니까? (y/n): ")
+            if save.lower() == 'y':
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                filename = f"analysis_result_{timestamp}.csv"
+                analyzed_df.to_csv(filename, encoding='utf-8-sig', index=False)
+                print(f"분석 결과가 {filename}에 저장되었습니다.")
+        
+        elif choice == '2':
+            pages = input("\n수집할 최대 페이지 수를 입력하세요 (1-10): ")
+            try:
+                pages = int(pages)
+                if pages <= 0 or pages > 10:
+                    print("1-10 사이의 숫자를 입력하세요.")
                     continue
                 
-                print(f"\n주식 종목을 분석하고 추천을 생성 중입니다...")
-                recommendation = get_stock_recommendations(recommendation_type)
-                print("\n" + "="*60)
-                print("주식 종목 추천")
-                print("="*60)
-                print(recommendation)
-                print("="*60)
+                print(f"\n최대 {pages}페이지까지 뉴스를 수집하고 분석합니다...")
                 
-            elif choice == "3":
-                print("Stock Helper를 종료합니다.")
-                break
+                # 네이버 뉴스 스크래핑
+                news_articles = scrape_naver_finance_news_titles(max_pages=pages)
                 
-            else:
-                print("잘못된 선택입니다. 1, 2 또는 3을 입력하세요.")
+                if not news_articles:
+                    print("수집된 뉴스가 없습니다.")
+                    continue
+                
+                print(f"\n총 {len(news_articles)}개의 뉴스를 수집했습니다.")
+                
+                # DataFrame으로 변환
+                news_df = pd.DataFrame(news_articles)
+                news_df['date'] = datetime.now()  # 현재 시간 추가
+                
+                # 뉴스 분석
+                print("\n뉴스를 분석하고 있습니다...")
+                analyzed_df = analyzer.analyze_news_data(news_df)
+                
+                # 투자 요약 생성
+                summary = analyzer.generate_investment_summary(analyzed_df)
+                print("\n=== 투자 분석 요약 ===")
+                print(summary)
+            
+            except ValueError:
+                print("올바른 숫자를 입력하세요.")
         
-    except KeyboardInterrupt:
-        print("\n\n프로그램이 중단되었습니다.")
-    except Exception as e:
-        logger.error(f"애플리케이션 실행 중 오류가 발생했습니다: {e}")
-        sys.exit(1)
-
+        elif choice == '3':
+            print("\n프로그램을 종료합니다.")
+            break
+        
+        else:
+            print("\n올바른 선택지를 입력하세요.")
 
 if __name__ == "__main__":
     main() 
