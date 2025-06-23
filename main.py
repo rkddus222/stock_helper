@@ -1,103 +1,64 @@
-#!/usr/bin/env python3
-"""
-주식 도우미 메인 애플리케이션
-
-네이버 금융 뉴스와 Investing.com 뉴스를 스크래핑하고 분석하여 투자 의사결정을 돕습니다.
-"""
-
+import asyncio
 import os
-import sys
-import time
-from datetime import datetime
-from dotenv import load_dotenv
-import pandas as pd
+from src.nodes.graph import LangGraphManager  # LangGraphManager가 있는 파일 경로
 
-# src 폴더를 Python 경로에 추가
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 
-from scrapers.naver_scraper import scrape_naver_finance_news_titles
-from scrapers.yahoo_finance_scraper import YahooFinanceScraper
-from news_based_analyzer import NewsBasedAnalyzer
+def check_api_keys():
+    """API 키들이 설정되어 있는지 확인"""
+    required_keys = ['OPENAI_API_KEY', 'GOOGLE_API_KEY', 'PPLX_API_KEY']
+    missing_keys = []
+    
+    for key in required_keys:
+        if not os.getenv(key):
+            missing_keys.append(key)
+    
+    return missing_keys
 
-def main():
-    """메인 애플리케이션"""
-    # 환경 변수 로드
-    load_dotenv()
-    
-    # API 키 확인
-    if not os.getenv('PERPLEXITY_API_KEY'):
-        print("Error: PERPLEXITY_API_KEY가 설정되지 않았습니다.")
-        print("1. .env 파일을 생성하세요.")
-        print("2. PERPLEXITY_API_KEY=your_api_key를 추가하세요.")
-        return
-    
-    print("=== 주식 뉴스 기반 투자 분석 시스템 ===")
-    
-    # 분석기 초기화
-    analyzer = NewsBasedAnalyzer()
-    
-    # Yahoo Finance 스크래퍼 초기화
-    yahoo_scraper = YahooFinanceScraper()
-    
-    all_news_articles = []
-    
-    # 네이버 뉴스 수집 (기본 5페이지)
-    print("\n네이버 금융 뉴스를 수집하는 중...")
-    naver_articles = scrape_naver_finance_news_titles(max_pages=5)
-    if naver_articles:
-        for article in naver_articles:
-            article['source'] = '네이버'
-        all_news_articles.extend(naver_articles)
-        print(f"네이버 뉴스 {len(naver_articles)}개 수집 완료.")
-    else:
-        print("네이버 뉴스 수집에 실패했습니다.")
 
-    # Yahoo Finance 뉴스 수집 (기본 2페이지)
-    print("\nYahoo Finance 뉴스를 수집하는 중...")
-    if yahoo_scraper.test_connection():
-        yahoo_articles = yahoo_scraper.get_news_list(max_pages=2)
-        if yahoo_articles:
-            for article in yahoo_articles:
-                article['source'] = 'Yahoo Finance'
-            all_news_articles.extend(yahoo_articles)
-            print(f"Yahoo Finance 뉴스 {len(yahoo_articles)}개 수집 완료.")
-        else:
-            print("Yahoo Finance 뉴스 수집에 실패했습니다.")
-    else:
-        print("Yahoo Finance 연결에 실패했습니다. 목업 데이터를 사용합니다.")
-        # 봇 차단 시 목업 데이터 사용
-        mock_articles = yahoo_scraper.get_mock_news()
-        for article in mock_articles:
-            article['source'] = 'Yahoo Finance (Mock)'
-        all_news_articles.extend(mock_articles)
-        print(f"Yahoo Finance 목업 뉴스 {len(mock_articles)}개 사용.")
-    
-    if not all_news_articles:
-        print("수집된 뉴스가 없습니다. 프로그램을 종료합니다.")
-        return
-    
-    print(f"\n총 {len(all_news_articles)}개의 뉴스를 수집했습니다.")
-    
-    # DataFrame으로 변환
-    news_df = pd.DataFrame(all_news_articles)
-    news_df['date'] = datetime.now()  # 현재 시간 추가
-    
-    # 뉴스 분석
-    print("\n뉴스를 분석하고 있습니다...")
-    analyzed_df = analyzer.analyze_news_data(news_df)
-    
-    # 투자 요약 생성
-    summary = analyzer.generate_investment_summary(analyzed_df)
-    print("\n=== 통합 뉴스 투자 분석 요약 ===")
-    print(summary)
-    
-    # 결과 저장
-    timestamp = time.strftime("%Y%m%d_%H%M%S")
-    filename = f"combined_analysis_result_{timestamp}.csv"
-    analyzed_df.to_csv(filename, encoding='utf-8-sig', index=False)
-    print(f"\n분석 결과가 {filename}에 저장되었습니다.")
-    
-    print("\n프로그램을 종료합니다.")
+async def run_langgraph_initialization():
+    """LangGraph를 초기화하고 실행하는 함수"""
+    try:
+        print("=== LangGraph 초기화 시작 ===")
+
+        # API 키 확인
+        missing_keys = check_api_keys()
+        if missing_keys:
+            print(f"⚠️  다음 API 키들이 설정되지 않았습니다: {', '.join(missing_keys)}")
+            print("API 키 없이 테스트 모드로 실행합니다...")
+            print("실제 LLM 호출은 실패할 수 있지만, LangGraph 구조는 테스트할 수 있습니다.")
+
+        # LangGraphManager 인스턴스 생성
+        graph_manager = LangGraphManager()
+
+        # 그래프 초기화 및 컴파일
+        compiled_graph = graph_manager.initialize_graph()
+
+        print("LangGraph 초기화 및 컴파일 완료.")
+
+        # 초기 상태 설정
+        initial_state = {
+            "collected_data": "",
+            "market_preview": "",
+            "analyzed_data": "",
+            "stock_list": []
+        }
+
+        print("=== LangGraph 실행 시작 ===")
+        
+        # 컴파일된 그래프 실행
+        result = compiled_graph.invoke(initial_state)
+        
+        print("=== LangGraph 실행 완료 ===")
+        print("실행 결과:")
+        print(f"수집된 데이터: {result.get('collected_data', 'N/A')}")
+        print(f"분석된 데이터: {result.get('analyzed_data', 'N/A')}")
+
+    except Exception as e:
+        print(f"LangGraph 초기화 중 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(run_langgraph_initialization())
+    print("\n=== LangGraph 초기화 프로세스 종료 ===")
