@@ -1,5 +1,6 @@
 from langgraph.graph import END, StateGraph, START
 
+from src.nodes.scraper import scraper
 from src.nodes.types import State
 from src.nodes.collector import collector
 from src.nodes.analyzer import analyzer
@@ -14,11 +15,13 @@ class LangGraphManager:
 
         graph.add_node("collector", collector)
         graph.add_node("analyzer", analyzer)
+        graph.add_node("scraper", scraper)
         
         graph.set_entry_point("collector")
 
         graph.add_edge(START, "collector")
         graph.add_edge("collector", "analyzer")
+        graph.add_edge("analyzer", "scraper")
         # graph.add_conditional_edges(
         #     "executor",
         #     lambda x: (

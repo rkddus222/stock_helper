@@ -52,6 +52,8 @@ async def run_langgraph_initialization():
         print("실행 결과:")
         print(f"수집된 데이터: {result.get('collected_data', 'N/A')}")
         print(f"분석된 데이터: {result.get('analyzed_data', 'N/A')}")
+        print(f"주식 리스트: {result.get('stock_list', 'N/A')}")
+        print(f"주식 뉴스: {result.get('scraped_data', 'N/A')}")
 
     except Exception as e:
         print(f"LangGraph 초기화 중 오류 발생: {e}")

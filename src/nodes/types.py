@@ -6,3 +6,4 @@ class State(TypedDict):
     market_preview: str
     analyzed_data: str
     stock_list: list
+    scraped_data: str
