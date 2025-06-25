@@ -33,62 +33,12 @@ def get_headers(tr_id: str) -> Dict[str, str]:
         "tr_id": tr_id
     }
 
-def get_stock_search(keyword: str) -> Dict[str, Any]:
-    """
-    종목명으로 주식 검색을 수행합니다.
-    일별 가격 데이터를 조회하기 전에 종목코드를 찾기 위해 필요합니다.
-
-    Args:
-        keyword: 검색할 종목명 키워드
-
-    Returns:
-        검색 결과 딕셔너리 (첫 번째 결과)
-    """
-    base_url = "https://openapi.koreainvestment.com:9443"
-    url = f"{base_url}/uapi/domestic-stock/v1/quotations/inquire-search"
-
-    params = {
-        "FID_COND_MRKT_DIV_CODE": "J",
-        "FID_COND_SCR_DIV_CODE": "20171",
-        "FID_INPUT_ISCD": keyword
-    }
-
-    headers = get_headers("FHKST01010300")
-
-    try:
-        response = requests.get(url, headers=headers, params=params)
-        response.raise_for_status()
-
-        result = response.json()
-
-        if result["rt_cd"] == "0" and result.get("output"):
-            output = result["output"]
-            
-            # 첫 번째 결과만 반환
-            if output and len(output) > 0:
-                first_item = output[0]
-                return {
-                    "종목코드": first_item["hts_kor_isnm"],
-                    "종목명": first_item["hts_kor_isnm"],
-                    "시장구분": first_item["rprs_mrkt_kor_name"]
-                }
-            else:
-                logger.warning(f"'{keyword}'에 대한 검색 결과가 없습니다.")
-                return {}
-        else:
-            logger.error(f"종목 검색 실패: {result.get('msg1', '알 수 없는 오류')}")
-            return {}
-
-    except Exception as e:
-        logger.error(f"종목 검색 중 오류 발생: {e}")
-        return {}
-
 def get_stock_current_price(stock_info: str) -> Dict[str, Any]:
     """
     특정 주식의 현재가 정보를 조회합니다.
 
     Args:
-        stock_info: 종목명 또는 종목코드 (예: "삼성전자" 또는 "005930")
+        stock_info: 종목코드 (예: "005930") 또는 종목명 (예: "삼성전자")
 
     Returns:
         현재가 정보 딕셔너리
@@ -96,13 +46,17 @@ def get_stock_current_price(stock_info: str) -> Dict[str, Any]:
     base_url = "https://openapi.koreainvestment.com:9443"
     url = f"{base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
 
-    # 종목 검색을 통해 종목코드 확인
-    stock_search_result = get_stock_search(stock_info)
-    if not stock_search_result:
-        logger.error(f"종목 '{stock_info}'을 찾을 수 없습니다.")
-        return {}
-    
-    stock_code = stock_search_result["종목코드"]
+    # 종목코드인지 확인 (6자리 숫자)
+    if stock_info.isdigit() and len(stock_info) == 6:
+        stock_code = stock_info
+    else:
+        # 종목명인 경우 검색을 통해 종목코드 확인
+        stock_search_result = get_stock_search(stock_info)
+        if not stock_search_result:
+            logger.error(f"종목 '{stock_info}'을 찾을 수 없습니다.")
+            return {}
+        
+        stock_code = stock_search_result["종목코드"]
     
     params = {
         "FID_COND_MRKT_DIV_CODE": "J",

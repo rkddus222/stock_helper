@@ -5,16 +5,18 @@ import json
 
 from src.scrapers.api_scraper import get_stock_current_price
 from src.nodes.types import State
+from src.scrapers.get_stock import load_stock_list
+
 
 def stock_scraper(state: State):
     """
     주식 리스트를 로드하고 각 종목에 대해 현재가 정보를 수집하여 state에 저장
     """
     print("=== 주식 데이터 수집 시작 ===")
-    
+
     # 주식 리스트 로드
-    stock_list = state["stock_list"]
-    
+    stock_list = load_stock_list()
+    print(stock_list)
     if not stock_list:
         print("주식 리스트가 비어있습니다. 환경변수 STOCK_LIST를 확인해주세요.")
         state["scraped_data"] = "주식 리스트가 비어있습니다."
@@ -32,7 +34,7 @@ def stock_scraper(state: State):
         try:
             # 현재가 정보 수집
             current_price_info = get_stock_current_price(
-                stock_info=stock_name
+                stock_info=stock_code
             )
 
             # 종목코드(종목명) 형태로 키 생성

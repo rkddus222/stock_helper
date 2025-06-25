@@ -9,22 +9,83 @@ import sys
 import requests
 import json
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
+from dotenv import load_dotenv, set_key
+from pathlib import Path
 
 from src.core.config import settings
 
-load_dotenv()
+# 프로젝트 루트 디렉토리 찾기
+project_root = Path(__file__).parent.parent.parent
+env_file_path = project_root / '.env'
+
+load_dotenv(env_file_path)
+
+def save_token_to_env(token_info: dict):
+    """
+    토큰 정보를 .env 파일에 저장합니다.
+    """
+    try:
+        # .env 파일에 토큰 정보 저장 (절대 경로 사용)
+        set_key(env_file_path, 'KOR_INVESTMENT_ACCESS_TOKEN', token_info['access_token'])
+        set_key(env_file_path, 'KOR_INVESTMENT_TOKEN_EXPIRES_AT', token_info['expires_at'])
+        set_key(env_file_path, 'KOR_INVESTMENT_TOKEN_TYPE', token_info['token_type'])
+        
+        print(f"✅ 토큰 정보가 {env_file_path} 파일에 저장되었습니다.")
+        return True
+    except Exception as e:
+        print(f"❌ 토큰 저장 중 오류: {e}")
+        return False
+
+def is_token_expired() -> bool:
+    """
+    저장된 토큰의 만료 시간을 확인합니다.
+    """
+    expires_at_str = os.getenv("KOR_INVESTMENT_TOKEN_EXPIRES_AT")
+    if not expires_at_str:
+        return True
+    
+    try:
+        expires_at = datetime.fromisoformat(expires_at_str)
+        # 10분 여유를 두고 만료 체크
+        return datetime.now() >= (expires_at - timedelta(minutes=10))
+    except Exception as e:
+        print(f"토큰 만료 시간 파싱 오류: {e}")
+        return True
+
+def get_saved_token() -> dict:
+    """
+    저장된 토큰 정보를 반환합니다.
+    """
+    access_token = os.getenv("KOR_INVESTMENT_ACCESS_TOKEN")
+    expires_at = os.getenv("KOR_INVESTMENT_TOKEN_EXPIRES_AT")
+    token_type = os.getenv("KOR_INVESTMENT_TOKEN_TYPE", "Bearer")
+    
+    if access_token and expires_at:
+        return {
+            "access_token": access_token,
+            "expires_at": expires_at,
+            "token_type": token_type,
+            "base_url": "https://openapi.koreainvestment.com:9443",
+            "is_production": True
+        }
+    return None
 
 def get_access_token() -> dict:
     """
     한국투자증권 API 액세스 토큰을 발급받습니다.
-
-    Args:
-        is_production: 실서버 사용 여부 (False: 모의투자, True: 실서버)
+    저장된 토큰이 있고 만료되지 않았다면 그것을 사용하고,
+    만료되었다면 새로 발급받아 저장합니다.
 
     Returns:
         토큰 정보 딕셔너리
     """
+    # 먼저 저장된 토큰이 있는지 확인
+    saved_token = get_saved_token()
+    if saved_token and not is_token_expired():
+        print("✅ 저장된 토큰을 사용합니다.")
+        return saved_token
+    
+    print("🔄 토큰이 만료되었거나 없습니다. 새로 발급받습니다...")
 
     # 환경변수에서 직접 API 키 가져오기
     app_key = os.getenv("KOR_INVESTMENT_APP_KEY")
@@ -65,10 +126,14 @@ def get_access_token() -> dict:
                 "is_production": True
             }
 
-            print("✅ 토큰 발급 성공!")
-            print(f"만료시간: {expires_at.strftime('%Y-%m-%d %H:%M:%S')}")
-
-            return token_info
+            # 토큰을 .env 파일에 저장
+            if save_token_to_env(token_info):
+                print("✅ 토큰 발급 및 저장 성공!")
+                print(f"만료시간: {expires_at.strftime('%Y-%m-%d %H:%M:%S')}")
+                return token_info
+            else:
+                print("⚠️ 토큰 발급은 성공했지만 저장에 실패했습니다.")
+                return token_info
 
         else:
             print(f"❌ 토큰 발급 실패: {response.status_code}")
