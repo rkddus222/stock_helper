@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     GOOGLE_API_KEY: str = Field(default="")
     PERPLEXITY_API_KEY: str = Field(default="")
 
+    KOR_INVESTMENT_APP_KEY: str = Field(default="")
+    KOR_INVESTMENT_APP_SECRET: str = Field(default="")
+
     # .env 파일 로드를 위한 설정 (필요시)
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

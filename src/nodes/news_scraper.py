@@ -3,18 +3,18 @@ from dotenv import load_dotenv
 from datetime import datetime
 import json
 
-from src.scrapers.get_stock import _load_stock_list, scrape_stock_news
-from src.scrapers.naver_scraper import scrape_naver_stock_news_filtered
+from src.scrapers.get_stock import load_stock_list
+from src.scrapers.naver_scraper import scrape_stock_news
 from src.nodes.types import State
 
-def scraper(state: State):
+def news_scraper(state: State):
     """
     주식 리스트를 로드하고 각 종목에 대해 뉴스를 수집하여 state에 저장
     """
-    print("=== 주식 데이터 수집 시작 ===")
+    print("=== 뉴스 데이터 수집 시작 ===")
     
     # 주식 리스트 로드
-    stock_list = _load_stock_list()
+    stock_list = load_stock_list()
     
     if not stock_list:
         print("주식 리스트가 비어있습니다. 환경변수 STOCK_LIST를 확인해주세요.")
