@@ -38,7 +38,8 @@ def analyzer(state: State):
         analyzed_data = response.content if hasattr(response, 'content') else str(response)
 
         if not analyzed_data:
-            return state.update({"analyzed_data": ""})
+            state["analyzed_data"] = ""
+            return state
 
         state["analyzed_data"] = analyzed_data
 
@@ -60,6 +61,7 @@ def final_analyzer(state: State):
 
         scraped_data = state["scraped_data"]
         analyzed_data = state["analyzed_data"]
+        stock_data = state["stock_data"]
 
         # API 키가 없으면 모의 응답 반환
         if not os.getenv('OPENAI_API_KEY'):
@@ -82,7 +84,7 @@ def final_analyzer(state: State):
             state["final_analyzed_data"] = mock_final_analysis.strip()
             return state
         
-        prompt_template = final_analyzer_prompt(analyzed_data, scraped_data)
+        prompt_template = final_analyzer_prompt(analyzed_data, scraped_data, stock_data)
         respondent_llm = prompt_template | llm
 
         # 빈 딕셔너리를 입력으로 제공 (입력 변수가 없으므로)
@@ -92,7 +94,8 @@ def final_analyzer(state: State):
         final_analyzed_data = response.content if hasattr(response, 'content') else str(response)
 
         if not final_analyzed_data:
-            return state.update({"final_analyzed_data": ""})
+            state["final_analyzed_data"] = ""
+            return state
 
         state["final_analyzed_data"] = final_analyzed_data
 

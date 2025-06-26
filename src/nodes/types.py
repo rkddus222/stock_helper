@@ -7,4 +7,5 @@ class State(TypedDict):
     stock_list_domestic: list
     stock_list_worldwide: list
     scraped_data: str
+    stock_data: str
     final_analyzed_data: str

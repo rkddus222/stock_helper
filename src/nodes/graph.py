@@ -4,7 +4,7 @@ from src.nodes.news_scraper import news_scraper
 from src.nodes.stock_scraper import stock_scraper
 from src.nodes.types import State
 from src.nodes.collector import collector
-from src.nodes.analyzer import analyzer
+from src.nodes.analyzer import analyzer, final_analyzer
 
 class LangGraphManager:
     def __init__(self):
@@ -18,6 +18,7 @@ class LangGraphManager:
         graph.add_node("analyzer", analyzer)
         graph.add_node("news_scraper", news_scraper)
         graph.add_node("stock_scraper", stock_scraper)
+        graph.add_node("final_analyzer", final_analyzer)
         
         graph.set_entry_point("collector")
 
@@ -25,6 +26,8 @@ class LangGraphManager:
         graph.add_edge("collector", "analyzer")
         graph.add_edge("analyzer", "news_scraper")
         graph.add_edge("news_scraper", "stock_scraper")
+        graph.add_edge("stock_scraper", "final_analyzer")
+        graph.add_edge("final_analyzer", END)
         # graph.add_conditional_edges(
         #     "executor",
         #     lambda x: (
