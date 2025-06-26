@@ -40,3 +40,4 @@ def analyzer_prompt(collected_data):
     print(prompt)
 
     return prompt
+

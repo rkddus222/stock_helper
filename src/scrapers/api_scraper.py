@@ -45,18 +45,7 @@ def get_stock_current_price(stock_info: str) -> Dict[str, Any]:
     """
     base_url = "https://openapi.koreainvestment.com:9443"
     url = f"{base_url}/uapi/domestic-stock/v1/quotations/inquire-price"
-
-    # 종목코드인지 확인 (6자리 숫자)
-    if stock_info.isdigit() and len(stock_info) == 6:
-        stock_code = stock_info
-    else:
-        # 종목명인 경우 검색을 통해 종목코드 확인
-        stock_search_result = get_stock_search(stock_info)
-        if not stock_search_result:
-            logger.error(f"종목 '{stock_info}'을 찾을 수 없습니다.")
-            return {}
-        
-        stock_code = stock_search_result["종목코드"]
+    stock_code = stock_info
     
     params = {
         "FID_COND_MRKT_DIV_CODE": "J",

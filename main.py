@@ -35,12 +35,14 @@ async def run_langgraph_initialization():
 
         print("LangGraph 초기화 및 컴파일 완료.")
 
-        # 초기 상태 설정
+        # 초기 상태 설정 (새로운 구조에 맞춰 업데이트)
         initial_state = {
             "collected_data": "",
-            "market_preview": "",
             "analyzed_data": "",
-            "stock_list": []
+            "scraped_data": "",
+            "final_analyzed_data": "",
+            "stock_list_domestic": [],
+            "stock_list_worldwide": []
         }
 
         print("=== LangGraph 실행 시작 ===")
@@ -49,11 +51,8 @@ async def run_langgraph_initialization():
         result = compiled_graph.invoke(initial_state)
         
         print("=== LangGraph 실행 완료 ===")
-        print("실행 결과:")
-        print(f"수집된 데이터: {result.get('collected_data', 'N/A')}")
-        print(f"분석된 데이터: {result.get('analyzed_data', 'N/A')}")
-        print(f"주식 리스트: {result.get('stock_list', 'N/A')}")
-        print(f"주식 뉴스: {result.get('scraped_data', 'N/A')}")
+        print("\n=== 최종 분석 결과 ===")
+        print(result.get('final_analyzed_data', '분석 결과가 없습니다.'))
 
     except Exception as e:
         print(f"LangGraph 초기화 중 오류 발생: {e}")

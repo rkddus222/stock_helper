@@ -14,22 +14,29 @@ def stock_scraper(state: State):
     """
     print("=== 주식 데이터 수집 시작 ===")
 
-    # 주식 리스트 로드
-    stock_list = load_stock_list()
-    print(stock_list)
-    if not stock_list:
-        print("주식 리스트가 비어있습니다. 환경변수 STOCK_LIST를 확인해주세요.")
+    # 주식 리스트 로드 (국내, 해외 분리)
+    stocks_domestic, stocks_worldwide = load_stock_list()
+    
+    # 국내와 해외 주식 합치기
+    all_stocks = {}
+    all_stocks.update(stocks_domestic)
+    all_stocks.update(stocks_worldwide)
+    
+    print(f"국내 주식: {len(stocks_domestic)}개, 해외 주식: {len(stocks_worldwide)}개")
+    
+    if not all_stocks:
+        print("주식 리스트가 비어있습니다. 환경변수 STOCK_LIST_DOMESTIC, STOCK_LIST_WORLDWIDE를 확인해주세요.")
         state["scraped_data"] = "주식 리스트가 비어있습니다."
         return state
 
     results = {}
     
     print(f"\n=== 주식 현재가 정보 수집 시작 ===")
-    print(f"수집 대상: {len(stock_list)}개 종목")
+    print(f"수집 대상: {len(all_stocks)}개 종목")
     print("=" * 50)
 
-    for i, (stock_code, stock_name) in enumerate(stock_list.items(), 1):
-        print(f"\n[{i}/{len(stock_list)}] {stock_code}({stock_name}) 현재가 정보 수집 중...")
+    for i, (stock_code, stock_name) in enumerate(all_stocks.items(), 1):
+        print(f"\n[{i}/{len(all_stocks)}] {stock_code}({stock_name}) 현재가 정보 수집 중...")
 
         try:
             # 현재가 정보 수집
@@ -56,7 +63,9 @@ def stock_scraper(state: State):
     # 수집 결과를 JSON 형태로 state에 저장
     scraped_data = {
         "timestamp": datetime.now().isoformat(),
-        "total_stocks": len(stock_list),
+        "total_stocks": len(all_stocks),
+        "domestic_stocks": len(stocks_domestic),
+        "worldwide_stocks": len(stocks_worldwide),
         "collected_data": results,
         "summary": {
             "total_stocks_with_data": len([data for data in results.values() if data]),
@@ -78,7 +87,8 @@ def stock_scraper(state: State):
         state["scraped_data"] = str(scraped_data)
     
     print(f"\n=== 주식 데이터 수집 완료 ===")
-    print(f"총 {len(stock_list)}개 종목에서 데이터 수집")
+    print(f"총 {len(all_stocks)}개 종목에서 데이터 수집")
+    print(f"  - 국내: {len(stocks_domestic)}개, 해외: {len(stocks_worldwide)}개")
     print(f"데이터 수집 성공: {scraped_data['summary']['total_stocks_with_data']}개")
     print(f"데이터 수집 실패: {scraped_data['summary']['stocks_without_data']}개")
     

@@ -74,7 +74,7 @@ def scrape_naver_stock_news_filtered(stock_code: str, keyword: str, max_count: i
         driver.quit()
     return all_articles
 
-def scrape_stock_news(
+def scrape_stock_domestic_news(
     stock_info: dict,
     keyword: str = "",
     max_count_per_stock: int = 10

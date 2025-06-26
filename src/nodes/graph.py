@@ -17,13 +17,14 @@ class LangGraphManager:
         graph.add_node("collector", collector)
         graph.add_node("analyzer", analyzer)
         graph.add_node("news_scraper", news_scraper)
+        graph.add_node("stock_scraper", stock_scraper)
         
         graph.set_entry_point("collector")
 
         graph.add_edge(START, "collector")
         graph.add_edge("collector", "analyzer")
         graph.add_edge("analyzer", "news_scraper")
-        graph.add_edge("news_scraper", "stcok_scraper")
+        graph.add_edge("news_scraper", "stock_scraper")
         # graph.add_conditional_edges(
         #     "executor",
         #     lambda x: (
