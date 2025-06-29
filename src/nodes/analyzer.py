@@ -16,15 +16,6 @@ def analyzer(state: State):
         # API 키가 없으면 모의 응답 반환
         if not os.getenv('OPENAI_API_KEY'):
             print("⚠️  OpenAI API 키가 설정되지 않아 모의 분석 결과를 반환합니다.")
-            mock_analysis = """
-            시장 전망: 중립
-            
-            핵심 근거:
-            1. 주요 지수들이 소폭 상승세를 보이고 있어 시장 심리가 안정적임
-            2. 금리 정책이 현재 수준에서 유지될 것으로 예상되어 큰 변동성은 없을 것으로 판단
-            3. 글로벌 경제 뉴스들이 혼재되어 있어 명확한 방향성을 제시하기 어려운 상황
-            """
-            state["analyzed_data"] = mock_analysis.strip()
             return state
 
         prompt_template = analyzer_prompt(collected_data)

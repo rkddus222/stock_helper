@@ -9,3 +9,8 @@ class State(TypedDict):
     scraped_data: str
     stock_data: str
     final_analyzed_data: str
+    proposed_domestic_data: str
+    proposed_worldwide_data: str
+    proposed_data: str
+    email_sent: bool
+    email_sent_time: str

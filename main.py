@@ -27,6 +27,13 @@ async def run_langgraph_initialization():
             print("API 키 없이 테스트 모드로 실행합니다...")
             print("실제 LLM 호출은 실패할 수 있지만, LangGraph 구조는 테스트할 수 있습니다.")
 
+        # 이메일 설정 확인
+        email_keys = ['SENDER_EMAIL', 'SENDER_PASSWORD', 'RECIPIENT_EMAIL']
+        missing_email_keys = [key for key in email_keys if not os.getenv(key)]
+        if missing_email_keys:
+            print(f"⚠️  이메일 설정이 완료되지 않았습니다: {', '.join(missing_email_keys)}")
+            print("이메일 전송 기능은 비활성화됩니다.")
+
         # LangGraphManager 인스턴스 생성
         graph_manager = LangGraphManager()
 
@@ -40,9 +47,13 @@ async def run_langgraph_initialization():
             "collected_data": "",
             "analyzed_data": "",
             "scraped_data": "",
+            "stock_data": "",
             "final_analyzed_data": "",
+            "proposed_data": "",
             "stock_list_domestic": [],
-            "stock_list_worldwide": []
+            "stock_list_worldwide": [],
+            "email_sent": False,
+            "email_sent_time": ""
         }
 
         print("=== LangGraph 실행 시작 ===")
@@ -53,6 +64,18 @@ async def run_langgraph_initialization():
         print("=== LangGraph 실행 완료 ===")
         print("\n=== 최종 분석 결과 ===")
         print(result.get('final_analyzed_data', '분석 결과가 없습니다.'))
+        
+        print("\n=== 추천 종목 정보 ===")
+        proposed_data = result.get('proposed_data', '추천 종목 정보가 없습니다.')
+        print(proposed_data)
+        
+        print("\n=== 이메일 전송 상태 ===")
+        email_sent = result.get('email_sent', False)
+        email_sent_time = result.get('email_sent_time', '알 수 없음')
+        if email_sent:
+            print(f"✅ 이메일 전송 성공: {email_sent_time}")
+        else:
+            print(f"❌ 이메일 전송 실패: {email_sent_time}")
 
     except Exception as e:
         print(f"LangGraph 초기화 중 오류 발생: {e}")

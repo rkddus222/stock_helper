@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from typing import Dict, List, Optional, Any
 import logging
-from ..core.config import settings
+from src.core.config import settings
 from .get_token import get_access_token
 
 # 환경변수 로드
@@ -49,7 +49,7 @@ def get_headers(tr_id: str) -> Dict[str, str]:
         "tr_id": tr_id
     }
 
-def get_domestic_stock_price(stock_code: str) -> Dict[str, Any]:
+def get_domestic_stock_price(stock_code: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """
     국내 주식의 현재가 정보를 한국투자증권 API로 조회합니다.
     """
@@ -60,8 +60,6 @@ def get_domestic_stock_price(stock_code: str) -> Dict[str, Any]:
         "FID_COND_MRKT_DIV_CODE": "J",
         "FID_INPUT_ISCD": stock_code
     }
-
-    headers = get_headers("FHKST01010100")
 
     try:
         response = requests.get(url, headers=headers, params=params)
@@ -141,7 +139,7 @@ def get_domestic_stock_price(stock_code: str) -> Dict[str, Any]:
         logger.error(f"국내 주식 현재가 조회 중 오류 발생: {e}")
         return {}
 
-def get_worldwide_stock_price(stock_code: str) -> Dict[str, Any]:
+def get_worldwide_stock_price(stock_code: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """
     해외 주식의 현재가 정보를 Yahoo Finance API로 조회합니다.
     """
@@ -217,9 +215,10 @@ def get_stock_current_price(stock_info: str) -> Dict[str, Any]:
         현재가 정보 딕셔너리
     """
     # 주식 코드가 국내 주식인지 해외 주식인지 판단
+    headers = get_headers("FHKST01010100")
     if is_domestic_stock(stock_info):
         logger.info(f"{stock_info}는 국내 주식으로 판단되어 한국투자증권 API를 사용합니다.")
-        return get_domestic_stock_price(stock_info)
+        return get_domestic_stock_price(stock_info, headers)
     else:
         logger.info(f"{stock_info}는 해외 주식으로 판단되어 Yahoo Finance API를 사용합니다.")
-        return get_worldwide_stock_price(stock_info)
+        return get_worldwide_stock_price(stock_info, headers)

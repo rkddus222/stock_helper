@@ -1,9 +1,6 @@
 import os
 import json
-import sys
 from dotenv import load_dotenv
-
-from src.scrapers.naver_scraper import scrape_naver_stock_news_filtered
 
 # 환경변수 로드
 load_dotenv()

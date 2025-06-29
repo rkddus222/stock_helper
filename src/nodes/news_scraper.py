@@ -1,12 +1,10 @@
-import os
-from dotenv import load_dotenv
 from datetime import datetime
 import json
 
-from src.scrapers.get_stock import load_stock_list
-from src.scrapers.naver_scraper import scrape_stock_domestic_news
+from src.service.stock_scrapers.get_stock import load_stock_list
+from src.service.news_scrapers.naver_scraper import scrape_stock_domestic_news
 from src.nodes.types import State
-from src.scrapers.yahoo_scraper import scrape_stock_worldwide_news
+from src.service.news_scrapers.yahoo_scraper import scrape_stock_worldwide_news
 
 
 def news_scraper(state: State):

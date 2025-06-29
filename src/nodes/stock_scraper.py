@@ -1,11 +1,9 @@
-import os
-from dotenv import load_dotenv
 from datetime import datetime
 import json
 
-from src.scrapers.api_scraper import get_stock_current_price, is_domestic_stock
+from src.service.stock_scrapers.api_scraper import get_stock_current_price
 from src.nodes.types import State
-from src.scrapers.get_stock import load_stock_list
+from src.service.stock_scrapers.get_stock import load_stock_list
 
 
 def stock_scraper(state: State):
