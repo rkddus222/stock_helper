@@ -14,7 +14,7 @@ gpt_fouro = ChatOpenAI(model="gpt-4o", temperature=0, top_p=1)
 
 # Perplexity 모델들 (명시적으로 키 전달)
 perplexity_sonar_small = ChatPerplexity(
-    model="llama-3.1-sonar-small-128k-online",
+    model="sonar-pro",
     temperature=0
 )
 perplexity_sonar_large = ChatPerplexity(

@@ -20,6 +20,9 @@ env_file_path = project_root / '.env'
 
 load_dotenv(env_file_path)
 
+# 토큰 캐시 변수
+_cached_token = None
+
 def save_token_to_env(token_info: dict):
     """
     토큰 정보를 .env 파일에 저장합니다.
@@ -70,6 +73,11 @@ def get_saved_token() -> dict:
         }
     return None
 
+def clear_token_cache():
+    """토큰 캐시를 초기화합니다."""
+    global _cached_token
+    _cached_token = None
+
 def get_access_token() -> dict:
     """
     한국투자증권 API 액세스 토큰을 발급받습니다.
@@ -79,10 +87,18 @@ def get_access_token() -> dict:
     Returns:
         토큰 정보 딕셔너리
     """
-    # 먼저 저장된 토큰이 있는지 확인
+    global _cached_token
+    
+    # 캐시된 토큰이 있고 만료되지 않았다면 재사용
+    if _cached_token and not is_token_expired():
+        print("✅ 캐시된 토큰을 사용합니다.")
+        return _cached_token
+    
+    # 저장된 토큰이 있고 만료되지 않았다면 그것을 사용
     saved_token = get_saved_token()
     if saved_token and not is_token_expired():
         print("✅ 저장된 토큰을 사용합니다.")
+        _cached_token = saved_token
         return saved_token
     
     print("🔄 토큰이 만료되었거나 없습니다. 새로 발급받습니다...")
@@ -130,9 +146,13 @@ def get_access_token() -> dict:
             if save_token_to_env(token_info):
                 print("✅ 토큰 발급 및 저장 성공!")
                 print(f"만료시간: {expires_at.strftime('%Y-%m-%d %H:%M:%S')}")
+                # 캐시에 저장
+                _cached_token = token_info
                 return token_info
             else:
                 print("⚠️ 토큰 발급은 성공했지만 저장에 실패했습니다.")
+                # 캐시에 저장
+                _cached_token = token_info
                 return token_info
 
         else:

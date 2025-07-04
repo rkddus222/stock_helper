@@ -15,6 +15,8 @@ def email_sender(state: State):
         proposed_data = state.get("proposed_data", "")
         stock_data = state.get("stock_data", "")
         scraped_data = state.get("scraped_data", "")
+        proposed_domestic_data = state.get("proposed_domestic_data", "")
+        proposed_worldwide_data = state.get("proposed_worldwide_data", "")
         
         print("📧 이메일 전송을 시작합니다...")
         
@@ -23,7 +25,9 @@ def email_sender(state: State):
             final_analyzed_data=final_analyzed_data,
             proposed_data=proposed_data,
             stock_data=stock_data,
-            scraped_data=scraped_data
+            scraped_data=scraped_data,
+            proposed_domestic_data=proposed_domestic_data,
+            proposed_worldwide_data=proposed_worldwide_data
         )
         
         if success:

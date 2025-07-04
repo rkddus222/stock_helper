@@ -4,12 +4,23 @@ from dotenv import load_dotenv
 from typing import Dict, List, Optional, Any
 import logging
 from src.core.config import settings
-from .get_token import get_access_token
+from .get_token import get_access_token, clear_token_cache
 
 # 환경변수 로드
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+# 토큰 캐시 변수
+_cached_headers = None
+
+def clear_token_cache():
+    """토큰 캐시를 초기화합니다."""
+    global _cached_headers
+    _cached_headers = None
+    # get_token 모듈의 캐시도 초기화
+    from .get_token import clear_token_cache as clear_token_module_cache
+    clear_token_module_cache()
 
 def is_domestic_stock(stock_code: str) -> bool:
     """
@@ -28,7 +39,28 @@ def is_domestic_stock(stock_code: str) -> bool:
         return True
     
 def get_headers(tr_id: str) -> Dict[str, str]:
-    """API 요청 헤더를 생성합니다."""
+    """API 요청 헤더를 생성합니다. 토큰을 캐시하여 재사용합니다."""
+    global _cached_headers
+    
+    # 캐시된 헤더가 있으면 재사용
+    if _cached_headers:
+        # 캐시된 토큰의 만료 시간 체크
+        from .get_token import _cached_token
+        if _cached_token:
+            from datetime import datetime, timedelta
+            try:
+                expires_at = datetime.fromisoformat(_cached_token['expires_at'])
+                # 10분 여유를 두고 만료 체크
+                if datetime.now() < (expires_at - timedelta(minutes=10)):
+                    # tr_id만 업데이트하여 반환
+                    headers = _cached_headers.copy()
+                    headers["tr_id"] = tr_id
+                    return headers
+            except Exception as e:
+                print(f"캐시된 토큰 만료 시간 파싱 오류: {e}")
+        
+        # 토큰이 만료되었으면 캐시 클리어
+        _cached_headers = None
 
     # 환경변수에서 직접 API 키 가져오기
     app_key = os.getenv("KOR_INVESTMENT_APP_KEY")
@@ -41,13 +73,16 @@ def get_headers(tr_id: str) -> Dict[str, str]:
     if not token_info:
         raise ValueError("토큰 발급에 실패했습니다.")
     
-    return {
+    # 헤더를 캐시에 저장
+    _cached_headers = {
         "Content-Type": "application/json; charset=utf-8",
         "authorization": f"Bearer {token_info['access_token']}",
         "appKey": app_key,
         "appSecret": app_secret,
         "tr_id": tr_id
     }
+    
+    return _cached_headers.copy()
 
 def get_domestic_stock_price(stock_code: str, headers: Dict[str, str]) -> Dict[str, Any]:
     """
@@ -139,7 +174,7 @@ def get_domestic_stock_price(stock_code: str, headers: Dict[str, str]) -> Dict[s
         logger.error(f"국내 주식 현재가 조회 중 오류 발생: {e}")
         return {}
 
-def get_worldwide_stock_price(stock_code: str, headers: Dict[str, str]) -> Dict[str, Any]:
+def get_worldwide_stock_price(stock_code: str) -> Dict[str, Any]:
     """
     해외 주식의 현재가 정보를 Yahoo Finance API로 조회합니다.
     """
@@ -215,10 +250,10 @@ def get_stock_current_price(stock_info: str) -> Dict[str, Any]:
         현재가 정보 딕셔너리
     """
     # 주식 코드가 국내 주식인지 해외 주식인지 판단
-    headers = get_headers("FHKST01010100")
     if is_domestic_stock(stock_info):
         logger.info(f"{stock_info}는 국내 주식으로 판단되어 한국투자증권 API를 사용합니다.")
+        headers = get_headers("FHKST01010100")
         return get_domestic_stock_price(stock_info, headers)
     else:
         logger.info(f"{stock_info}는 해외 주식으로 판단되어 Yahoo Finance API를 사용합니다.")
-        return get_worldwide_stock_price(stock_info, headers)
+        return get_worldwide_stock_price(stock_info)
